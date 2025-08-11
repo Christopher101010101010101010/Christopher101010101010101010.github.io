@@ -72,10 +72,13 @@
 
 <!--Test button to open popup window populated by artifact orig/updated code ..? -->
 <button onclick="openPopup()"> Test open popup </button>
+<p>artifact1Code</p>
 
 <script>
   
   function openPopup(){
+    using System.Net.Http;
+    using System.Web;
     using HttpClient client0 = new HttpClient();
     string artifact1Code = await client0.GetStringAsync("https://github.com/Christopher101010101010101010/Christopher101010101010101010.github.io/blob/main/gpiointerruptARTIFACT1UPDATED.c");
     string artifact1HtmlStr = HttpUtility.HtmlEncode(artifact1Code);
