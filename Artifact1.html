@@ -62,13 +62,13 @@
      &ensp;|&ensp; 
     <a href="https://github.com/Christopher101010101010101010/Christopher101010101010101010.github.io/blob/main/gpiointerruptARTIFACT1ORIGINAL.c" >original version </a></H2>
     <br><br>
-    <p>&nbsp;&nbsp;</p>
+
     </div>
 
     <div class= "codeDiv">
     <div class= "origDiv">
-      <H3><br><br>Original code<br><br></H3>
-      <p><br><br>/*<br>
+      <p><H3><br><br>Original code<br><br></H3>
+      <br><br>/*<br>
          *  ======== gpiointerrupt.c ========<br>
          */<br>
         #include <stdint.h><br>
@@ -428,413 +428,412 @@
     </div>
 
     <div class= "updatDiv">
-         <H3><br><br>Updated code<br><br></H3>
-          <p>
-/*<br>
- *  ======== gpiointerrupt.c ========<br>
- */<br>
-#include <stdint.h><br>
-#include <stddef.h><br>
-<br>
-/* Driver Header files */<br>
-#include <ti/drivers/GPIO.h><br>
-<br>
-/* Driver configuration */<br>
-#include "ti_drivers_config.h"<br>
-<br><br>
-
-/* Project header files */<br>
-#include <ti/drivers/I2C.h><br>
-#include <ti/drivers/UART2.h><br>
-#include <ti/drivers/Timer.h><br>
-#include <stdio.h><br>
-<br>
-// UART Global Variables<br>
-char output[150];<br>
-int bytesToSend;<br>
-<br>
-// Driver Handles - Global variables<br>
-UART2_Handle uart;<br>
-<br>
-#define DISPLAY(x) UART2_write(uart, &output, sizeof(output), 0);<br>
-<br>
-void initUART(void)<br>
-{<br>
-    UART2_Params uartParams;<br>
-<br>
-    // Configure the driver<br>
-    UART2_Params_init(&uartParams);<br>
-    uartParams.writeMode = UART2_Mode_CALLBACK;<br>
-    uartParams.readMode = UART2_Mode_CALLBACK;<br>
-<br>
-    uartParams.baudRate = 115200;<br>
-<br>
-    // Open the driver<br>
-    uart = UART2_open(CONFIG_UART2_0, &uartParams);<br>
-<br>
-    if (uart == NULL) {<br>
-        /* UART_open() failed */<br>
-        while (1);<br>
-    }<br>
-}<br>
-<br>
-// Driver Handles - Global variables<br>
-Timer_Handle timer0;<br>
-int periodCondition = 0;<br>
-<br>
-volatile unsigned char TimerFlag = 0;<br>
-void timerCallback(Timer_Handle myHandle, int_fast16_t status)<br>
-{<br>
-    if(periodCondition < 10)<br>
-        periodCondition++;<br>
-<br>
-    else<br>
-        periodCondition = 0;<br>
-}<br>
-<br>
-void initTimer(void)<br>
-{<br>
-    Timer_Params params;<br>
-<br>
-    // Init the driver<br>
-    Timer_init();<br>
-<br>
-    // Configure the driver<br>
-    Timer_Params_init(&params);<br>
-    params.period = 100000;<br>
-    params.periodUnits = Timer_PERIOD_US;<br>
-    params.timerMode = Timer_CONTINUOUS_CALLBACK;<br>
-    params.timerCallback = timerCallback;<br>
-<br>
-    // Open the driver<br>
-    timer0 = Timer_open(CONFIG_TIMER_0, &params);<br>
-    if (timer0 == NULL) {<br>
-        /* Failed to initialized timer */<br>
-        while (1) {}<br>
-    }<br>
-    if (Timer_start(timer0) == Timer_STATUS_ERROR) {<br>
-        /* Failed to start timer */<br>
-        while (1) {}<br>
-    }<br>
-}<br>
-<br>
-// I2C Global Variables<br>
-static const struct {<br>
-    uint8_t address;<br>
-    uint8_t resultReg;<br>
-    char *id;<br>
-} sensors[3] = {<br>
-                { 0x48, 0x0000, "11X" },<br>
-                { 0x49, 0x0000, "116" },<br>
-                { 0x41, 0x0001, "006" }<br>
-};<br>
-<br>
-uint8_t txBuffer[1];<br>
-uint8_t rxBuffer[2];<br>
-I2C_Transaction i2cTransaction;<br>
-<br>
-// Driver Handles - Global variables<br>
-I2C_Handle i2c;<br>
-<br>
-// Make sure you call initUART() before calling this function.<br>
-void initI2C(void)<br>
-{<br>
-    int8_t i, found;<br>
-    I2C_Params i2cParams;<br>
-    DISPLAY( snprintf(output, 150, "Initializing I2C Driver - "));<br>
-<br>
-    // Init the driver<br>
-    I2C_init();<br>
-<br>
-    // Configure the driver<br>
-    I2C_Params_init(&i2cParams);<br>
-    i2cParams.bitRate = I2C_400kHz;<br>
-<br>
-    // Open the driver<br>
-    i2c = I2C_open(CONFIG_I2C_0, &i2cParams);<br>
-    if (i2c == NULL)<br>
-    {<br>
-        DISPLAY( snprintf(output, 150, "Failed\n\r"));<br>
-        while (1);<br>
-    }<br>
-<br>
-    DISPLAY( snprintf(output, 64, "Passed\n\r"));<br>
-<br>
-    // Boards were shipped with different sensors.<br>
-    // Welcome to the world of embedded systems.<br>
-    // Try to determine which sensor we have.<br>
-    // Scan through the possible sensor addresses<br>
-<br>
-    /* Common I2C transaction setup */<br>
-    i2cTransaction.writeBuf = txBuffer;<br>
-    i2cTransaction.writeCount = 1;<br>
-    i2cTransaction.readBuf = rxBuffer;<br>
-    i2cTransaction.readCount = 0;<br>
-<br>
-    found = false;<br>
-    for (i=0; i<3; ++i)<br>
-    {<br>
-        i2cTransaction.targetAddress = sensors[i].address;<br>
-        txBuffer[0] = sensors[i].resultReg;<br>
-        DISPLAY( snprintf(output, 150, "Is this %s? ", sensors[i].id));<br>
-        if (I2C_transfer(i2c, &i2cTransaction))<br>
-        {<br>
-            DISPLAY( snprintf(output, 150, "Found\n\r"));<br>
-            found = true;<br>
-            break;<br>
-        }<br>
-        DISPLAY( snprintf(output, 150, "Not Found at sensor index\n\r"));<br>
-    }<br>
-<br>
-    if(found)<br>
-    {<br>
-        DISPLAY( snprintf(output, 150, "Detected TMP%s I2C address: %x\n\r", sensors[i].id, i2cTransaction.targetAddress));<br>
-    }<br>
-    else<br>
-    {<br>
-        DISPLAY( snprintf(output, 150, "Temperature sensor not found, contact professor\n\r"));<br>
-    }<br>
-}<br>
-<br>
-int16_t readTemp(void)<br>
-{<br>
-    int16_t temperature = 0;<br>
-    i2cTransaction.readCount = 2;<br>
-    if (I2C_transfer(i2c, &i2cTransaction))<br>
-    {<br>
-        /*<br>
-         * Extract degrees C from the received data;<br>
-         * see TMP sensor datasheet<br>
-         */<br>
-        temperature = (rxBuffer[0] << 8) | (rxBuffer[1]);<br>
-        temperature *= 0.0078125;<br>
-        /*<br>
-         * If the MSB is set '1', then we have a 2's complement<br>
-         * negative value which needs to be sign extended<br>
-         */<br>
-        if (rxBuffer[0] & 0x80)<br>
-        {<br>
-            temperature |= 0xF000;<br>
-        }<br>
-    }<br>
-    else<br>
-    {<br>
-        DISPLAY( snprintf(output, 150, "Error reading temperature sensor (%d)\n\r", i2cTransaction.status));<br>
-        DISPLAY( snprintf(output, 150, "Please power cycle your board by unplugging/plugging back in.\n\r"));<br>
-    }<br>
-    return temperature;<br>
-}<br>
-<br>
-//global temperature variables<br>
-<br>
-uint16_t setPoint = 0;              //TI CC3220S board's button interface controlled variable to set user defined temperature preference<br>
-uint16_t roomTemp = 0;              //TI CC3220S board's thermopile(temperature sensor) defined variable for degree F reading local to device<br>
-uint16_t systemMode = 0;            //0, off. 1, heating. 2, cooling.<br>
-uint16_t activationStatus = 0;      //0, off. 1, on<br>
-<br>
-uint16_t button0Activation = 0;     //0, inactive. 1, active.<br>
-uint16_t button1Activation = 0;     //0, inactive. 1, active.<br>
-<br>
-/*<br>
- *  ======== gpioButtonFxn0 ========<br>
- *  Callback function for the GPIO interrupt on CONFIG_GPIO_BUTTON_0.<br>
- *<br>
- *  Note: GPIO interrupts are cleared prior to invoking callbacks.<br>
- */<br>
-void gpioButtonFxn0(uint_least8_t index)<br>
-{<br>
-    //increase set point temperature value by 1 degree<br>
-    setPoint++;<br>
-    button0Activation = 1;              // set button activation status to on<br>
-    usleep(200000);                     // only check for altered button state every 200 ms<br>
-<br>
-}<br>
-<br>
-/*<br>
- *  ======== gpioButtonFxn1 ========<br>
- *  Callback function for the GPIO interrupt on CONFIG_GPIO_BUTTON_1.<br>
- *  This may not be used for all boards.<br>
- *<br>
- *  Note: GPIO interrupts are cleared prior to invoking callbacks.<br>
- */<br>
-void gpioButtonFxn1(uint_least8_t index)<br>
-{<br>
-    //increase set point temperature value by 1 degree<br>
-    setPoint--;<br>
-    button1Activation = 1;              // set button activation status to on<br>
-    usleep(200000);                     // only check for altered button state every 200 ms<br>
-<br>
-}<br>
-<br>
-void buttonStatusCh(){<br>
-    //check for both buttons being active<br>
-    //if both buttons are active cycle to the next system mode setting<br>
-    //0, off. 1, heating mode. 2, cooling mode.<br>
-    if(button0Activation == 1 && button1Activation == 1){<br>
-        if(systemMode < 2 && systemMode > -1){<br>
-            systemMode++;<br>
-        }<br>
-        else if(systemMode == 2){<br>
-            systemMode = 0;<br>
-        }<br>
-        else{<br>
-            DISPLAY( snprintf(output, 150, "Error: systemMode setting out of bounds\nDEACTIVATING SYSTEM."));<br>
-            systemMode = 0;<br>
-        }<br>
-    }<br>
-}<br>
-<br>
-void checkTempStatus(){<br>
-    if(roomTemp  < setPoint && systemMode == 1){                            //if room temp is less than set point and the system is in heating mode then activate system<br>
-         GPIO_write(CONFIG_GPIO_LED_0, CONFIG_GPIO_LED_ON);<br>
-         activationStatus = 1;<br>
-    }<br>
-    else if(roomTemp > setPoint && systemMode == 2){                        //else-if room temp is greater than set point and the system is in cooling mode then activate system<br>
-        GPIO_write(CONFIG_GPIO_LED_1, CONFIG_GPIO_LED_ON);<br>
-        activationStatus = 1;<br>
-    }<br>
-    else if(roomTemp >= setPoint && systemMode == 1){                       //else-if room temp is greater than or equal to set point and system is in heating mode then deactivate system<br>
-         GPIO_write(CONFIG_GPIO_LED_0, CONFIG_GPIO_LED_OFF);<br>
-         activationStatus = 0;<br>
-    }<br>
-    else if(roomTemp <= setPoint && systemMode == 2){                       //else-if room temp is less than or equal to set point and system is in cooling mode then deactivate system<br>
-        GPIO_write(CONFIG_GPIO_LED_1, CONFIG_GPIO_LED_OFF);<br>
-        activationStatus = 0;<br>
-    }<br>
-}<br>
-<br>
-void buttonReset(){                                                         //Reset button activation status to avoid trigger unwanted system mode cycling<br>
-    button0Activation = 0;<br>
-    button1Activation = 0;<br>
-}<br>
-<br>
-<br>
-/*<br>
- *  ======== mainThread ========<br>
- */<br>
-void *mainThread(void *arg0)<br>
-{<br>
-    /* Call driver init functions */<br>
-    GPIO_init();<br>
-    initUART();<br>
-    initTimer();<br>
-    initI2C();<br>
-<br>
-    /* Configure the LED and button pins */<br>
-    GPIO_setConfig(CONFIG_GPIO_LED_0, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);<br>
-    GPIO_setConfig(CONFIG_GPIO_LED_1, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);<br>
-<br>
-    GPIO_setConfig(CONFIG_GPIO_BUTTON_0, GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING);<br>
-    GPIO_setConfig(CONFIG_GPIO_BUTTON_1, GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING);<br>
-<br>
-    /* Turn on user LED */<br>
-    GPIO_write(CONFIG_GPIO_LED_0, CONFIG_GPIO_LED_ON);<br>
-    GPIO_write(CONFIG_GPIO_LED_1, CONFIG_GPIO_LED_ON);<br>
-<br>
-    /* Install Button callback */<br>
-    GPIO_setCallback(CONFIG_GPIO_BUTTON_0, gpioButtonFxn0);<br>
-    GPIO_setCallback(CONFIG_GPIO_BUTTON_1, gpioButtonFxn1);<br>
-<br>
-    /* Enable interrupts */<br>
-    GPIO_enableInt(CONFIG_GPIO_BUTTON_0);<br>
-    GPIO_enableInt(CONFIG_GPIO_BUTTON_1);<br>
-<br>
-    // initialize room-temp to current temperature read by device.<br>
-    // initialize set point to the room temperature<br>
-    roomTemp = readTemp();<br>
-    setPoint = roomTemp;<br>
-    uint32_t serverDisplayTicks = 10000000; //1sec is 10000000 us<br>
-    uint16_t totalTime = 0;<br>
-<br>
-    // output board data to command prompt<br>
-    DISPLAY( snprintf(output, 150, "<Room Temperature: %02d, Set Temperature: %02d, Activation Status(0-OFF, 1-ON): %d, Mode(0-OFF, 1-HEATING, 2-COOLING): %d, Total Time Since Execution: %04d>\n\r",<br>
-                      roomTemp, setPoint, activationStatus, systemMode, totalTime));<br>
-<br>
-    while(1){<br>
-<br>
-        // Each case represents a 100 millisecond period of activation, up to 1 second inwhich the period condition value will reset it's value back to 0, or the initial period index<br>
-        switch(periodCondition){<br>
-<br>
-            case 0:                                                                     // every 200 ms update the heating/cooling LED and activation status to ON/OFF<br>
-<br>
-                buttonStatusCh();                                                       // if both buttons have been activated then cycle to the next system mode option<br>
-                checkTempStatus();                                                      // compare set point temperature to the room temperature reading and activate/deactivate the system appropriately<br>
-<br>
-                buttonReset();                                                          // reset both button 0 and 1 activation status to off, 0.<br>
-                break;<br>
-<br>
-            case 1:<br>
-                break;<br>
-<br>
-            case 2:                                                                    // every 200 ms update the heating/cooling LED and activation status to ON/OFF<br>
-<br>
-                buttonStatusCh();                                                      // if both buttons have been activated then cycle to the next system mode option<br>
-                checkTempStatus();                                                     // compare set point temperature to the room temperature reading and activate/deactivate the system appropriately<br>
-<br>
-                buttonReset();                                                          // reset both button 0 and 1 activation status to off, 0.<br>
-                break;<br>
-<br>
-            case 3:<br>
-                break;<br>
-<br>
-            case 4:                                                                     // every 200 ms update the heating/cooling LED and activation status to ON/OFF<br>
-                roomTemp = readTemp();                                                  // every 500 ms update temperature sensor reading in roomTemp variable<br>
-<br>
-                buttonStatusCh();                                                       // if both buttons have been activated then cycle to the next system mode option<br>
-                checkTempStatus();                                                      // compare set point temperature to the room temperature reading and activate/deactivate the system appropriately<br>
-<br>
-                buttonReset();                                                          // reset both button 0 and 1 activation status to off, 0.<br>
-                break;<br>
-<br>
-            case 5:                                                                     // every 500 ms update roomTemp to current room temperature measurement<br>
-                if(!(roomTemp > -1 && roomTemp < 120)){                                 // if room temperature reading is out-of-bounds set room-temp to 0<br>
-                    //error code                                                        // and turn off heatStatus/LED<br>
-                    DISPLAY( snprintf(output, 150, "error reading room temperature(temp. sensor fault)"));<br>
-                    roomTemp = 0;<br>
-                    GPIO_write(CONFIG_GPIO_LED_0, CONFIG_GPIO_LED_OFF);<br>
-                    activationStatus = 0;<br>
-                    systemMode = 0;<br>
-                }<br>
-                break;<br>
-<br>
-            case 6:                                                                     // every 200 ms update the heating/cooling LED and activation status to ON/OFF<br>
-<br>
-                buttonStatusCh();                                                       // if both buttons have been activated then cycle to the next system mode option<br>
-                checkTempStatus();                                                      // compare set point temperature to the room temperature reading and activate/deactivate the system appropriately<br>
-<br>
-                buttonReset();                                                          // reset both button 0 and 1 activation status to off, 0.<br>
-                break;<br>
-<br>
-            case 7:<br>
-                break;<br>
-<br>
-            case 8:                                                                     // every 200 ms update the heating/cooling LED and activation status to ON/OFF<br>
-<br>
-                buttonStatusCh();                                                       // if both buttons have been activated then cycle to the next system mode option<br>
-                checkTempStatus();                                                      // compare set point temperature to the room temperature reading and activate/deactivate the system appropriately<br>
-<br>
-                buttonReset();                                                          // reset both button 0 and 1 activation status to off, 0.<br>
-                break;<br>
-<br>
-            case 9:                                                                    // every 1 sec update server with thermostats current data<br>
-                roomTemp = readTemp();                                                  // every 500ms update temperature sensor reading stored in roomTemp variable<br>
-<br>
-                totalTime = Timer_getCount(timer0) / serverDisplayTicks;                // output board data to command prompt<br>
-                DISPLAY( snprintf(output, 150, "<Room Temperature: %02d, Set Temperature: %02d, Mode(0-OFF, 1-HEATING, 2-COOLING): %d, Total Time Since Execution: %04d>\n\r",<br>
-                                 roomTemp, setPoint, systemMode, totalTime));<br>
-                break;<br>
-<br>
-            default:<br>
-                break;<br>
-<br>
-        }<br>
-<br>
-<br>
-<br>
-    }<br>
-<br>
-    return;<br>
-}<br>         
+         <p><H3><br><br>Updated code<br><br></H3>
+          /*<br>
+           *  ======== gpiointerrupt.c ========<br>
+           */<br>
+          #include <stdint.h><br>
+          #include <stddef.h><br>
+          <br>
+          /* Driver Header files */<br>
+          #include <ti/drivers/GPIO.h><br>
+          <br>
+          /* Driver configuration */<br>
+          #include "ti_drivers_config.h"<br>
+          <br><br>
+          
+          /* Project header files */<br>
+          #include <ti/drivers/I2C.h><br>
+          #include <ti/drivers/UART2.h><br>
+          #include <ti/drivers/Timer.h><br>
+          #include <stdio.h><br>
+          <br>
+          // UART Global Variables<br>
+          char output[150];<br>
+          int bytesToSend;<br>
+          <br>
+          // Driver Handles - Global variables<br>
+          UART2_Handle uart;<br>
+          <br>
+          #define DISPLAY(x) UART2_write(uart, &output, sizeof(output), 0);<br>
+          <br>
+          void initUART(void)<br>
+          {<br>
+              UART2_Params uartParams;<br>
+          <br>
+              // Configure the driver<br>
+              UART2_Params_init(&uartParams);<br>
+              uartParams.writeMode = UART2_Mode_CALLBACK;<br>
+              uartParams.readMode = UART2_Mode_CALLBACK;<br>
+          <br>
+              uartParams.baudRate = 115200;<br>
+          <br>
+              // Open the driver<br>
+              uart = UART2_open(CONFIG_UART2_0, &uartParams);<br>
+          <br>
+              if (uart == NULL) {<br>
+                  /* UART_open() failed */<br>
+                  while (1);<br>
+              }<br>
+          }<br>
+          <br>
+          // Driver Handles - Global variables<br>
+          Timer_Handle timer0;<br>
+          int periodCondition = 0;<br>
+          <br>
+          volatile unsigned char TimerFlag = 0;<br>
+          void timerCallback(Timer_Handle myHandle, int_fast16_t status)<br>
+          {<br>
+              if(periodCondition < 10)<br>
+                  periodCondition++;<br>
+          <br>
+              else<br>
+                  periodCondition = 0;<br>
+          }<br>
+          <br>
+          void initTimer(void)<br>
+          {<br>
+              Timer_Params params;<br>
+          <br>
+              // Init the driver<br>
+              Timer_init();<br>
+          <br>
+              // Configure the driver<br>
+              Timer_Params_init(&params);<br>
+              params.period = 100000;<br>
+              params.periodUnits = Timer_PERIOD_US;<br>
+              params.timerMode = Timer_CONTINUOUS_CALLBACK;<br>
+              params.timerCallback = timerCallback;<br>
+          <br>
+              // Open the driver<br>
+              timer0 = Timer_open(CONFIG_TIMER_0, &params);<br>
+              if (timer0 == NULL) {<br>
+                  /* Failed to initialized timer */<br>
+                  while (1) {}<br>
+              }<br>
+              if (Timer_start(timer0) == Timer_STATUS_ERROR) {<br>
+                  /* Failed to start timer */<br>
+                  while (1) {}<br>
+              }<br>
+          }<br>
+          <br>
+          // I2C Global Variables<br>
+          static const struct {<br>
+              uint8_t address;<br>
+              uint8_t resultReg;<br>
+              char *id;<br>
+          } sensors[3] = {<br>
+                          { 0x48, 0x0000, "11X" },<br>
+                          { 0x49, 0x0000, "116" },<br>
+                          { 0x41, 0x0001, "006" }<br>
+          };<br>
+          <br>
+          uint8_t txBuffer[1];<br>
+          uint8_t rxBuffer[2];<br>
+          I2C_Transaction i2cTransaction;<br>
+          <br>
+          // Driver Handles - Global variables<br>
+          I2C_Handle i2c;<br>
+          <br>
+          // Make sure you call initUART() before calling this function.<br>
+          void initI2C(void)<br>
+          {<br>
+              int8_t i, found;<br>
+              I2C_Params i2cParams;<br>
+              DISPLAY( snprintf(output, 150, "Initializing I2C Driver - "));<br>
+          <br>
+              // Init the driver<br>
+              I2C_init();<br>
+          <br>
+              // Configure the driver<br>
+              I2C_Params_init(&i2cParams);<br>
+              i2cParams.bitRate = I2C_400kHz;<br>
+          <br>
+              // Open the driver<br>
+              i2c = I2C_open(CONFIG_I2C_0, &i2cParams);<br>
+              if (i2c == NULL)<br>
+              {<br>
+                  DISPLAY( snprintf(output, 150, "Failed\n\r"));<br>
+                  while (1);<br>
+              }<br>
+          <br>
+              DISPLAY( snprintf(output, 64, "Passed\n\r"));<br>
+          <br>
+              // Boards were shipped with different sensors.<br>
+              // Welcome to the world of embedded systems.<br>
+              // Try to determine which sensor we have.<br>
+              // Scan through the possible sensor addresses<br>
+          <br>
+              /* Common I2C transaction setup */<br>
+              i2cTransaction.writeBuf = txBuffer;<br>
+              i2cTransaction.writeCount = 1;<br>
+              i2cTransaction.readBuf = rxBuffer;<br>
+              i2cTransaction.readCount = 0;<br>
+          <br>
+              found = false;<br>
+              for (i=0; i<3; ++i)<br>
+              {<br>
+                  i2cTransaction.targetAddress = sensors[i].address;<br>
+                  txBuffer[0] = sensors[i].resultReg;<br>
+                  DISPLAY( snprintf(output, 150, "Is this %s? ", sensors[i].id));<br>
+                  if (I2C_transfer(i2c, &i2cTransaction))<br>
+                  {<br>
+                      DISPLAY( snprintf(output, 150, "Found\n\r"));<br>
+                      found = true;<br>
+                      break;<br>
+                  }<br>
+                  DISPLAY( snprintf(output, 150, "Not Found at sensor index\n\r"));<br>
+              }<br>
+          <br>
+              if(found)<br>
+              {<br>
+                  DISPLAY( snprintf(output, 150, "Detected TMP%s I2C address: %x\n\r", sensors[i].id, i2cTransaction.targetAddress));<br>
+              }<br>
+              else<br>
+              {<br>
+                  DISPLAY( snprintf(output, 150, "Temperature sensor not found, contact professor\n\r"));<br>
+              }<br>
+          }<br>
+          <br>
+          int16_t readTemp(void)<br>
+          {<br>
+              int16_t temperature = 0;<br>
+              i2cTransaction.readCount = 2;<br>
+              if (I2C_transfer(i2c, &i2cTransaction))<br>
+              {<br>
+                  /*<br>
+                   * Extract degrees C from the received data;<br>
+                   * see TMP sensor datasheet<br>
+                   */<br>
+                  temperature = (rxBuffer[0] << 8) | (rxBuffer[1]);<br>
+                  temperature *= 0.0078125;<br>
+                  /*<br>
+                   * If the MSB is set '1', then we have a 2's complement<br>
+                   * negative value which needs to be sign extended<br>
+                   */<br>
+                  if (rxBuffer[0] & 0x80)<br>
+                  {<br>
+                      temperature |= 0xF000;<br>
+                  }<br>
+              }<br>
+              else<br>
+              {<br>
+                  DISPLAY( snprintf(output, 150, "Error reading temperature sensor (%d)\n\r", i2cTransaction.status));<br>
+                  DISPLAY( snprintf(output, 150, "Please power cycle your board by unplugging/plugging back in.\n\r"));<br>
+              }<br>
+              return temperature;<br>
+          }<br>
+          <br>
+          //global temperature variables<br>
+          <br>
+          uint16_t setPoint = 0;              //TI CC3220S board's button interface controlled variable to set user defined temperature preference<br>
+          uint16_t roomTemp = 0;              //TI CC3220S board's thermopile(temperature sensor) defined variable for degree F reading local to device<br>
+          uint16_t systemMode = 0;            //0, off. 1, heating. 2, cooling.<br>
+          uint16_t activationStatus = 0;      //0, off. 1, on<br>
+          <br>
+          uint16_t button0Activation = 0;     //0, inactive. 1, active.<br>
+          uint16_t button1Activation = 0;     //0, inactive. 1, active.<br>
+          <br>
+          /*<br>
+           *  ======== gpioButtonFxn0 ========<br>
+           *  Callback function for the GPIO interrupt on CONFIG_GPIO_BUTTON_0.<br>
+           *<br>
+           *  Note: GPIO interrupts are cleared prior to invoking callbacks.<br>
+           */<br>
+          void gpioButtonFxn0(uint_least8_t index)<br>
+          {<br>
+              //increase set point temperature value by 1 degree<br>
+              setPoint++;<br>
+              button0Activation = 1;              // set button activation status to on<br>
+              usleep(200000);                     // only check for altered button state every 200 ms<br>
+          <br>
+          }<br>
+          <br>
+          /*<br>
+           *  ======== gpioButtonFxn1 ========<br>
+           *  Callback function for the GPIO interrupt on CONFIG_GPIO_BUTTON_1.<br>
+           *  This may not be used for all boards.<br>
+           *<br>
+           *  Note: GPIO interrupts are cleared prior to invoking callbacks.<br>
+           */<br>
+          void gpioButtonFxn1(uint_least8_t index)<br>
+          {<br>
+              //increase set point temperature value by 1 degree<br>
+              setPoint--;<br>
+              button1Activation = 1;              // set button activation status to on<br>
+              usleep(200000);                     // only check for altered button state every 200 ms<br>
+          <br>
+          }<br>
+          <br>
+          void buttonStatusCh(){<br>
+              //check for both buttons being active<br>
+              //if both buttons are active cycle to the next system mode setting<br>
+              //0, off. 1, heating mode. 2, cooling mode.<br>
+              if(button0Activation == 1 && button1Activation == 1){<br>
+                  if(systemMode < 2 && systemMode > -1){<br>
+                      systemMode++;<br>
+                  }<br>
+                  else if(systemMode == 2){<br>
+                      systemMode = 0;<br>
+                  }<br>
+                  else{<br>
+                      DISPLAY( snprintf(output, 150, "Error: systemMode setting out of bounds\nDEACTIVATING SYSTEM."));<br>
+                      systemMode = 0;<br>
+                  }<br>
+              }<br>
+          }<br>
+          <br>
+          void checkTempStatus(){<br>
+              if(roomTemp  < setPoint && systemMode == 1){                            //if room temp is less than set point and the system is in heating mode then activate system<br>
+                   GPIO_write(CONFIG_GPIO_LED_0, CONFIG_GPIO_LED_ON);<br>
+                   activationStatus = 1;<br>
+              }<br>
+              else if(roomTemp > setPoint && systemMode == 2){                        //else-if room temp is greater than set point and the system is in cooling mode then activate system<br>
+                  GPIO_write(CONFIG_GPIO_LED_1, CONFIG_GPIO_LED_ON);<br>
+                  activationStatus = 1;<br>
+              }<br>
+              else if(roomTemp >= setPoint && systemMode == 1){                       //else-if room temp is greater than or equal to set point and system is in heating mode then deactivate system<br>
+                   GPIO_write(CONFIG_GPIO_LED_0, CONFIG_GPIO_LED_OFF);<br>
+                   activationStatus = 0;<br>
+              }<br>
+              else if(roomTemp <= setPoint && systemMode == 2){                       //else-if room temp is less than or equal to set point and system is in cooling mode then deactivate system<br>
+                  GPIO_write(CONFIG_GPIO_LED_1, CONFIG_GPIO_LED_OFF);<br>
+                  activationStatus = 0;<br>
+              }<br>
+          }<br>
+          <br>
+          void buttonReset(){                                                         //Reset button activation status to avoid trigger unwanted system mode cycling<br>
+              button0Activation = 0;<br>
+              button1Activation = 0;<br>
+          }<br>
+          <br>
+          <br>
+          /*<br>
+           *  ======== mainThread ========<br>
+           */<br>
+          void *mainThread(void *arg0)<br>
+          {<br>
+              /* Call driver init functions */<br>
+              GPIO_init();<br>
+              initUART();<br>
+              initTimer();<br>
+              initI2C();<br>
+          <br>
+              /* Configure the LED and button pins */<br>
+              GPIO_setConfig(CONFIG_GPIO_LED_0, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);<br>
+              GPIO_setConfig(CONFIG_GPIO_LED_1, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);<br>
+          <br>
+              GPIO_setConfig(CONFIG_GPIO_BUTTON_0, GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING);<br>
+              GPIO_setConfig(CONFIG_GPIO_BUTTON_1, GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING);<br>
+          <br>
+              /* Turn on user LED */<br>
+              GPIO_write(CONFIG_GPIO_LED_0, CONFIG_GPIO_LED_ON);<br>
+              GPIO_write(CONFIG_GPIO_LED_1, CONFIG_GPIO_LED_ON);<br>
+          <br>
+              /* Install Button callback */<br>
+              GPIO_setCallback(CONFIG_GPIO_BUTTON_0, gpioButtonFxn0);<br>
+              GPIO_setCallback(CONFIG_GPIO_BUTTON_1, gpioButtonFxn1);<br>
+          <br>
+              /* Enable interrupts */<br>
+              GPIO_enableInt(CONFIG_GPIO_BUTTON_0);<br>
+              GPIO_enableInt(CONFIG_GPIO_BUTTON_1);<br>
+          <br>
+              // initialize room-temp to current temperature read by device.<br>
+              // initialize set point to the room temperature<br>
+              roomTemp = readTemp();<br>
+              setPoint = roomTemp;<br>
+              uint32_t serverDisplayTicks = 10000000; //1sec is 10000000 us<br>
+              uint16_t totalTime = 0;<br>
+          <br>
+              // output board data to command prompt<br>
+              DISPLAY( snprintf(output, 150, "<Room Temperature: %02d, Set Temperature: %02d, Activation Status(0-OFF, 1-ON): %d, Mode(0-OFF, 1-HEATING, 2-COOLING): %d, Total Time Since Execution: %04d>\n\r",<br>
+                                roomTemp, setPoint, activationStatus, systemMode, totalTime));<br>
+          <br>
+              while(1){<br>
+          <br>
+                  // Each case represents a 100 millisecond period of activation, up to 1 second inwhich the period condition value will reset it's value back to 0, or the initial period index<br>
+                  switch(periodCondition){<br>
+          <br>
+                      case 0:                                                                     // every 200 ms update the heating/cooling LED and activation status to ON/OFF<br>
+          <br>
+                          buttonStatusCh();                                                       // if both buttons have been activated then cycle to the next system mode option<br>
+                          checkTempStatus();                                                      // compare set point temperature to the room temperature reading and activate/deactivate the system appropriately<br>
+          <br>
+                          buttonReset();                                                          // reset both button 0 and 1 activation status to off, 0.<br>
+                          break;<br>
+          <br>
+                      case 1:<br>
+                          break;<br>
+          <br>
+                      case 2:                                                                    // every 200 ms update the heating/cooling LED and activation status to ON/OFF<br>
+          <br>
+                          buttonStatusCh();                                                      // if both buttons have been activated then cycle to the next system mode option<br>
+                          checkTempStatus();                                                     // compare set point temperature to the room temperature reading and activate/deactivate the system appropriately<br>
+          <br>
+                          buttonReset();                                                          // reset both button 0 and 1 activation status to off, 0.<br>
+                          break;<br>
+          <br>
+                      case 3:<br>
+                          break;<br>
+          <br>
+                      case 4:                                                                     // every 200 ms update the heating/cooling LED and activation status to ON/OFF<br>
+                          roomTemp = readTemp();                                                  // every 500 ms update temperature sensor reading in roomTemp variable<br>
+          <br>
+                          buttonStatusCh();                                                       // if both buttons have been activated then cycle to the next system mode option<br>
+                          checkTempStatus();                                                      // compare set point temperature to the room temperature reading and activate/deactivate the system appropriately<br>
+          <br>
+                          buttonReset();                                                          // reset both button 0 and 1 activation status to off, 0.<br>
+                          break;<br>
+          <br>
+                      case 5:                                                                     // every 500 ms update roomTemp to current room temperature measurement<br>
+                          if(!(roomTemp > -1 && roomTemp < 120)){                                 // if room temperature reading is out-of-bounds set room-temp to 0<br>
+                              //error code                                                        // and turn off heatStatus/LED<br>
+                              DISPLAY( snprintf(output, 150, "error reading room temperature(temp. sensor fault)"));<br>
+                              roomTemp = 0;<br>
+                              GPIO_write(CONFIG_GPIO_LED_0, CONFIG_GPIO_LED_OFF);<br>
+                              activationStatus = 0;<br>
+                              systemMode = 0;<br>
+                          }<br>
+                          break;<br>
+          <br>
+                      case 6:                                                                     // every 200 ms update the heating/cooling LED and activation status to ON/OFF<br>
+          <br>
+                          buttonStatusCh();                                                       // if both buttons have been activated then cycle to the next system mode option<br>
+                          checkTempStatus();                                                      // compare set point temperature to the room temperature reading and activate/deactivate the system appropriately<br>
+          <br>
+                          buttonReset();                                                          // reset both button 0 and 1 activation status to off, 0.<br>
+                          break;<br>
+          <br>
+                      case 7:<br>
+                          break;<br>
+          <br>
+                      case 8:                                                                     // every 200 ms update the heating/cooling LED and activation status to ON/OFF<br>
+          <br>
+                          buttonStatusCh();                                                       // if both buttons have been activated then cycle to the next system mode option<br>
+                          checkTempStatus();                                                      // compare set point temperature to the room temperature reading and activate/deactivate the system appropriately<br>
+          <br>
+                          buttonReset();                                                          // reset both button 0 and 1 activation status to off, 0.<br>
+                          break;<br>
+          <br>
+                      case 9:                                                                    // every 1 sec update server with thermostats current data<br>
+                          roomTemp = readTemp();                                                  // every 500ms update temperature sensor reading stored in roomTemp variable<br>
+          <br>
+                          totalTime = Timer_getCount(timer0) / serverDisplayTicks;                // output board data to command prompt<br>
+                          DISPLAY( snprintf(output, 150, "<Room Temperature: %02d, Set Temperature: %02d, Mode(0-OFF, 1-HEATING, 2-COOLING): %d, Total Time Since Execution: %04d>\n\r",<br>
+                                           roomTemp, setPoint, systemMode, totalTime));<br>
+                          break;<br>
+          <br>
+                      default:<br>
+                          break;<br>
+          <br>
+                  }<br>
+          <br>
+          <br>
+          <br>
+              }<br>
+          <br>
+              return;<br>
+          }<br>         
           </p>      
     </div>                   
     </div>
