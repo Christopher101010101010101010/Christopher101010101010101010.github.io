@@ -131,16 +131,635 @@
     <div>&ensp;</div>
     <div>
       <p><H3><br><br>Original code<br><br></H3>
+        
+         # Connect to database via CRUD Module# Connect to database via CRUD Module# Connect to database via CRUD Module<br>
+         db = AnimalShelter(username, password, hostName, portNumber) <br>
+         <br>
+         # class read method must support return of list object and accept projection json input<br>
+         # sending the read method an empty document requests all documents be returned<br>
+         df = pd.DataFrame.from_records(db.read({}))<br>
+         <br>
+         # MongoDB v5+ is going to return the '_id' column and that is going to have an <br>
+         # invlaid object type of 'ObjectID' - which will cause the data_table to crash - so we remove<br>
+         # it in the dataframe here. The df.drop command allows us to drop the column. If we do not set<br>
+         # inplace=True - it will reeturn a new dataframe that does not contain the dropped column(s)<br>
+         df.drop(columns=['_id'],inplace=True)<br>
+         <br>
+         ## Debug<br>
+         # print(len(df.to_dict(orient='records')))<br>
+         # print(df.columns)<br>
+         <br>
+         <br>
+         #########################<br>
+         # Dashboard Layout / View<br>
+         #########################<br>
+         app = JupyterDash(__name__)<br>
+         <br>
+         #FIX ME Add in Grazioso Salvare’s logo<br>
+         image_filename = './assets/Grazioso Salvare Logo.png' # replace with your own image<br>
+         encoded_image = base64.b64encode(open(image_filename, 'rb').read())<br>
+         <br>
+         #FIX ME Place the HTML image tag in the line below into the app.layout code according to your design<br>
+         #FIX ME Also remember to include a unique identifier such as your name or date<br>
+         <br>
+         app.layout = html.Div([<br>
+         #    html.Div(id='hidden-div', style={'display':'none'}),<br>
+             html.Center(html.B(html.H1('CS-340 Dashboard'))),<br>
+             html.Hr(),<br>
+             html.A( href="http://www.snhu.edu",<br>
+                     children=[ html.Img(src='data:image/png;base64,{}'.format(encoded_image.decode()),<br>
+                                         style={'height':'25%','width':'25%'}),]),<br>
+             html.Img(src=app.get_asset_url('SRDogImage.jpg'), style={'height': '30%', 'width':'35%'}),<br>
+             html.Div(<br>
+                 #FIXME Add in code for the interactive filtering options. For example, Radio buttons, drop down, checkboxes, etc.<br>
+                 dcc.Dropdown(['Water Rescue', 'Mountain or Wilderness Rescue', 'Disaster Rescue or Individual Tracking',<br>
+                              'Reset Filter'], 'Reset Filter', id='filter-type'),<br>
+                 style={'width':'25%'},<br>
+                 <br>
+             ),<br>
+             html.Hr(),<br>
+             dash_table.DataTable(id='datatable-id',<br>
+                                  columns=[{"name": i, "id": i, "deletable": False, "selectable": True} for i in df.columns],<br>
+                                  data=df.to_dict('records'),<br>
+         #FIXME: Set up the features for your interactive data table to make it user-friendly for your client<br>
+         #If you completed the Module Six Assignment, you can copy in the code you created here <br>
+                                  sort_action = 'native',<br>
+                                  sort_mode = 'multi',<br>
+                                  page_size = 15,<br>
+                                  row_selectable="single",<br>
+                                 ),<br>
+             html.Br(),<br>
+             html.Hr(),<br>
+             <br>
+         #This sets up the dashboard so that your chart and your geolocation chart are side-by-side<br>
+             html.Div(className='row',<br>
+                  style={'display' : 'flex'},<br>
+                      children=[<br>
+                 html.Div(<br>
+                     id='graph-id',<br>
+                     className='col s12 m6',<br>
+         <br>
+                     ),<br>
+                 html.Div(<br>
+                     id='map-id',<br>
+                     className='col s12 m6',<br>
+                     )<br>
+                 ]),<br>
+             html.Hr(),<br>
+             <br>
+             #Student and professor names right aligned at bottom of html page<br>
+             html.Div([html.P('Christopher Anderson'), html.P('Prof. Kellogg')],<br>
+                       style={'text-align':'right'}<br>
+                      ),<br>
+             html.Br(),<br>
+             html.Br(),<br>
+         ])<br>
+         <br>
+         <br>
+         #############################################<br>
+         # Interaction Between Components / Controller<br>
+         #############################################<br>
+             <br>
+         @app.callback(Output('datatable-id','data'),<br>
+                       [Input('filter-type', 'value')])<br>
+         def update_dashboard(filter_type):<br>
+         ## FIX ME Add code to filter interactive data table with MongoDB queries<br>
+                 #print('filter_type::', filter_type)<br>
+                 if filter_type == 'Water Rescue':<br>
+                     df = pd.DataFrame.from_records(db.read({'animal_type': 'Dog','breed' <br>
+                                                             : {'$in' : [ 'Labrador Retriever Mix',<br>
+                                                                         'Chesapeake Bay Retriever',<br>
+                                                                         'Newfoundland']},<br>
+                                                            'sex_upon_outcome' : 'Intact Female',<br>
+                                                            "$and": [{'age_upon_outcome_in_weeks' : { '$gte' : 26}},<br>
+                                                             {'age_upon_outcome_in_weeks' : { '$lte' : 156}}]<br>
+                                                            }))<br>
+                 elif filter_type == 'Mountain or Wilderness Rescue':<br>
+                     df = pd.DataFrame.from_records(db.read({'animal_type': 'Dog', 'breed' <br>
+                                                             : {'$in' : [ 'German Shepherd', 'Alaskan Malamute',<br>
+                                                                          'Old English Sheepdog', 'Siberian Husky',<br>
+                                                                          'Rottweiler']},<br>
+                                                            'sex_upon_outcome' : 'Intact Male',<br>
+                                                             "$and": [{'age_upon_outcome_in_weeks' : { '$gte' : 26}},<br>
+                                                             {'age_upon_outcome_in_weeks' : { '$lte' : 156}}]<br>
+                                                            }))<br>
+                 elif filter_type == 'Disaster Rescue or Individual Tracking':<br>
+                     df = pd.DataFrame.from_records(db.read({'animal_type': 'Dog', 'breed' <br>
+                                                             : {'$in' : ['Doberman Pinscher', 'German Shepherd',<br>
+                                                                         'Golden Retriever', 'Bloodhound',<br>
+                                                                         'Rottweiler']},<br>
+                                                             'sex_upon_outcome' : 'Intact Male',<br>
+                                                             "$and" : [{'age_upon_outcome_in_weeks' : { '$gte' : 20}},<br>
+                                                             {'age_upon_outcome_in_weeks' : { '$lte' : 300}}]             <br>                                      
+                                                            }))<br>
+                 elif filter_type == 'Reset Filter':<br>
+                     df = pd.DataFrame.from_records(db.read({}))<br>
+                 <br>
+                 else:<br>
+                     raise Exception("Error: drop down menu fault.")<br>
+                 <br>
+                 df.drop(columns=['_id'],inplace=True)<br>
+                 data=df.to_dict('records')<br>
+                <br>
+                 return data<br>
+         <br>
+         # Display the breeds of animal based on quantity represented in<br>
+         # the data table<br>
+         @app.callback(Output('graph-id', "children"),<br>
+                       [Input('datatable-id', "derived_virtual_data")])<br>
+         def update_graphs(viewData):<br>
+             ###FIX ME ####<br>
+             # add code for chart of your choice (e.g. pie chart) #<br>
+             if viewData is None:<br>
+                 return<br>
+             <br>
+             dug = pd.DataFrame.from_dict(viewData)<br>
+         <br>
+             return [<br>
+                 dcc.Graph(            <br>
+                     figure = px.pie(dug, names='breed', title='Preferred Animals')<br>
+                 )]<br>
+             <br>
+         #This callback will highlight a cell on the data table when the user selects it<br>
+         @app.callback(Output('datatable-id', 'style_data_conditional'),<br>
+                       [Input('datatable-id', 'selected_columns')])<br>
+         def update_styles(selected_columns):<br>
+             return [{<br>
+                 'if': { 'column_id': i },<br>
+                 'background_color': '#D2F3FF'<br>
+             } for i in selected_columns]<br>
+         <br>
+         <br>
+         # This callback will update the geo-location chart for the selected data entry<br>
+         # derived_virtual_data will be the set of data available from the datatable in the form of <br>
+         # a dictionary.<br>
+         # derived_virtual_selected_rows will be the selected row(s) in the table in the form of<br>
+         # a list. For this application, we are only permitting single row selection so there is only<br>
+         # one value in the list.<br>
+         # The iloc method allows for a row, column notation to pull data from the datatable<br>
+         @app.callback(Output('map-id', "children"),<br>
+                       [Input('datatable-id', "derived_virtual_data"),<br>
+                       Input('datatable-id', "derived_virtual_selected_rows")])<br>
+         def update_map(viewData, index):  <br>
+             if viewData is None:<br>
+                 return<br>
+             elif index is None:<br>
+                 return<br>
+             <br>
+             dff = pd.DataFrame.from_dict(viewData)<br>
+             # Because we only allow single row selection, the list can be converted to a row index here<br>
+             if index is None:<br>
+                 row = 0<br>
+             else: <br>
+                 row = index[0]<br>
+                 <br>
+             # Austin TX is at [30.75,-97.48]<br>
+             return [<br>
+                 dl.Map(style={'width': '1000px', 'height': '500px'}, center=[30.75,-97.48], zoom=10, children=[<br>
+                     dl.TileLayer(id="base-layer-id"),<br>
+                     # Marker with tool tip and popup<br>
+                     # Column 13 and 14 define the grid-coordinates for the map<br>
+                     # Column 4 defines the breed for the animal<br>
+                     # Column 9 defines the name of the animal<br>
+                     dl.Marker(position=[dff.iloc[row,13],dff.iloc[row,14]], children=[<br>
+                         dl.Tooltip(dff.iloc[row,4]),<br>
+                         dl.Popup([<br>
+                             html.H1("Animal Name"),<br>
+                             html.P(dff.iloc[row,9])<br>
+                         ])<br>
+                     ])])]<br>
+         <br>
+         <br>
+         <br>
+         app.run_server(debug=True)<br>
+
+                            
 
 
-        
-        
+       
     </p></div>
 
        
     <div>&emsp;&emsp;&emsp;&emsp; &emsp;&emsp;&emsp;&emsp; &emsp;&emsp;</div>
     <div>
          <p><H3><br><br>Updated code<br><br></H3>
+
+
+             # Connect to database via CRUD Module<br>
+             db = AnimalShelter(username, password, hostName, portNumber)<br>
+             <br>
+             # class read method must support return of list object and accept projection json input<br>
+             # sending the read method an empty document requests all documents be returned<br>
+             df = pd.DataFrame.from_records(db.read({}))<br>
+             <br>
+             # MongoDB v5+ is going to return the '_id' column and that is going to have an <br>
+             # invlaid object type of 'ObjectID' - which will cause the data_table to crash - so we remove<br>
+             # it in the dataframe here. The df.drop command allows us to drop the column. If we do not set<br>
+             # inplace=True - it will reeturn a new dataframe that does not contain the dropped column(s)<br>
+             df.drop(columns=['_id'],inplace=True)<br>
+             <br>
+             ## Debug<br>
+             # print(len(df.to_dict(orient='records')))<br>
+             # print(df.columns)<br>
+             <br>
+             <br>
+             ########################################################<br>
+             # PopUp Buttons, popup window components, functions<br>
+             #<br>
+             ########################################################<br>
+             #Popup activation buttons<br>
+             buttonAdd = widgets.Button(description='Add animal',<br>
+                                        disabled=False,<br>
+                                        button_style='',<br>
+                                        tooltip='Add new animal data',<br>
+                                        icon='')<br>
+             <br>
+             buttonUpdate = widgets.Button(description='Update existing info',<br>
+                                           disabled=False,<br>
+                                           button='',<br>
+                                           tooltip='Update an existing animal\'s info',<br>
+                                           icon='')<br>
+             <br>
+             buttonRemove = widgets.Button(description='Remove animal',<br>
+                                           disabled=False,<br>
+                                           button_style='',<br>
+                                           tooltip='Delete an animal from system',<br>
+                                           icon='')<br>
+             <br>
+             #submission buttons for each popup window<br>
+             submitNew_button = widgets.Button(description="Submit New",<br>
+                                             disabled=False,<br>
+                                             button_style='',<br>
+                                             tooltip='Submit new animal',<br>
+                                             icon='')<br>
+             <br>
+             submitUpdate_button = widgets.Button(description="Submit Update",<br>
+                                                disabled=False,<br>
+                                                button_style='',<br>
+                                                tooltip='Submit updated animal',<br>
+                                                icon='')<br>
+             <br>
+             submitRemove_button = widgets.Button(description="Submit Deletion",<br>
+                                                disabled=False,<br>
+                                                button_style='',<br>
+                                                tooltip='Delete animal',<br>
+                                                icon='')<br>
+             <br>
+             #Variables for text input for create, update and remove popup windows<br>
+             #database record format {'rec_num' : '', 'age_upon_outcome' : '', 'animal_id' : '', 'animal_type' : '',<br>
+             #                        'breed' : '', 'color' : '', 'date_of_birth' : '', 'datetime' : '', 'monthyear' : '',<br>
+             #                        'name' : '', 'outcome_subtype' : '', 'sex_upon_outcome' : '', 'location_lat' : '',<br>
+             #                        'location_long' : '', 'age_upon_outcome_in_weeks' : ''}<br>
+             text_inputID = widgets.Text( value = '',<br>
+                                          description="Id:",<br>
+                                          placeholder="Enter Id",<br>
+                                          disabled=False)<br>
+             <br>
+             text_inputID_lookup = widgets.Text( value = '',<br>
+                                                 description="Existing Animal ID:",<br>
+                                                 placeholder="Enter Id",<br>
+                                                 disabled=False)<br>
+             <br>
+             text_inputTYPE = widgets.Text( value='',<br>
+                                            description="Animal Type:",<br>
+                                            placeholder="Enter Type",<br>
+                                            disabled=False)<br>
+             <br>
+             text_inputBREED = widgets.Text( value='',<br>
+                                             description="Breed:",<br>
+                                             placeholder="Enter breed",<br>
+                                             disabled=False)<br>
+             <br>
+             text_inputCOLOR = widgets.Text( value = '',<br>
+                                             description="Color:",<br>
+                                             placeholder="Enter color",<br>
+                                             disabled=False)<br>
+             <br>
+             text_inputDOB = widgets.Text( value='',<br>
+                                           description="Date of Birth:",<br>
+                                           placeholder="Enter DoB",<br>
+                                           disabled=False)<br>
+             <br>
+             text_inputName = widgets.Text( value='',<br>
+                                            description="Name:",<br>
+                                            placeholder="Enter name",<br>
+                                            disabled=False)<br>
+             <br>
+             text_inputOutcomeSubtype = widgets.Text( value='',<br>
+                                                      description="Outcome Subtype:",<br>
+                                                      placeholder="Enter outcome subtype",<br>
+                                                      disabled=False)<br>
+             <br>
+             text_inputOutcomeType = widgets.Text( value ='',<br>
+                                                   description="Outcome:",<br>
+                                                   placeholder="Enter outcome type",<br>
+                                                   disabled=False)<br>
+             <br>
+             text_inputSexAtOutcome = widgets.Text( value='',<br>
+                                                    description="Sex Upon Outcome:",<br>
+                                                    placeholder="Enter sex upon outcome",<br>
+                                                    disabled=False)<br>
+             <br>
+             text_inputAgeUponOutcome = widgets.Text( value ='',<br>
+                                                      description="Age Upon Outcome:",<br>
+                                                      placeholder="Enter age upon outcome(years)",<br>
+                                                      disabled=False)<br>
+             <br>
+             text_inputLocLat = widgets.Text( value='', <br>
+                                              description="Location Latitude:",<br>
+                                              placeholder="Enter latitude of location",<br>
+                                              disabled=False)<br>
+             <br>
+             text_inputLocLong = widgets.Text( value='',<br>
+                                               description="Location Longitude",<br>
+                                               placeholder="Enter location longitude",<br>
+                                               disabled=False)<br>
+             #popup output stream handle<br>
+             popup_output = widgets.Output()<br>
+             <br>
+             #define submission buttons' behavoir upon being clicked<br>
+             def on_submitNew_clicked(submitNew_button):<br>
+             <br>
+                 #automatically generate new record number based on current number of objects in database<br>
+                 newRecordNumber = len(df.index) + 1<br>
+                 <br>
+                 #automatically generate new record date-time for creation of data entry<br>
+                 entryDate = datetime.today()<br>
+                 <br>
+                 db.create({"rec_num" : newRecordNumber, "animal_id" : textinputID.value, "animal_type" : text_inputTYPE.value,<br>
+                            "breed" : text_inputBREED.value, "color" : text_inputCOLOR.value,<br>
+                            "date_of_birth" : text_inputDOB.value, "datetime" : entryDate, "name" : text_inputName.value,<br>
+                            "location_lat" : text_inputLocLat.value, "location_long" : text_inputLocLong.value})<br>
+             <br>
+                 #close popup window upon completion of subission task<br>
+                 popup_output.clear_output()<br>
+             <br>
+             <br>
+             def on_submitUpdate_clicked(submitUpdate_button):<br>
+                 <br>
+                 # if a text input box has been altered from it's empty value update<br>
+                 # the corresponding animal object associated with the animal ID the user entered<br>
+                 if text_inputAgeUponOutcome.value != '':<br>
+                     db.update({"animal_id" : text_inputID_lookup.value}, <br>
+                               {"age_upon_outcome" : text_inputAgeUponOutcome.value})<br>
+             <br>
+                     #automatically generate updated animals age in weeks based upon age in years if entered<br>
+                     ageInWeeks = 52.143 * text_inputAgeUponOutcome.value<br>
+                     db.update({"animal_id" : text_inputID_lookup.value},<br>
+                               {"age_upon_outcome_in_weeks" : ageInWeeks})<br>
+                 <br>
+                 if text_inputName.value != '':<br>
+                     db.update({"animal_id" : text_inputID_lookup.value}, <br>
+                               {"name" : text_inputName.value})<br>
+                 <br>
+                 if text_inputOutcomeSubtype.value != '':<br>
+                     db.update({"animal_id" : text_inputID_lookup.value}, <br>
+                               {"outcome_subtype" : text_inputOutcomeSubtype.value})<br>
+                 <br>
+                 if text_inputOutcomeType.value != '':<br>
+                     db.update({"animal_id" : text_inputID_lookup.value}, <br>
+                               {"outcome_type" : text_inputOutcomeType.value})<br>
+             <br>
+                 if text_inputSexAtOutcome.value != '':<br>
+                     db.update({"animal_id" : text_inputID_lookup.value}, <br>
+                               {"sex_upon_outcome" : text_inputSexAtOutcome.value})<br>
+             <br>
+                 if text_inputLocLat.value != '':<br>
+                     db.update({"animal_id" : text_inputID_lookup.value}, <br>
+                               {"location_lat" : text_inputLocLat.value})<br>
+             <br>
+                 if text_inputLocLong.value != '':<br>
+                     db.update({"animal_id" : text_inputID_lookup.value}, <br>
+                               {"location_long" : text_inputLocLat.value})<br>
+             <br>
+                 #close popup window upon completion of submission task<br>
+                 popup_output.clear_output()<br>
+                     <br>
+                 <br>
+             def on_submitRemove_clicked(submitRemove_button):<br>
+                 #delete animal object with ID matching that input by user<br>
+                 db.delete({"animal_id" : text_inputID_lookup.value})<br>
+             <br>
+                 #close popup window upon completion of submission task<br>
+                 popup_output.clear_output()<br>
+                 <br>
+             #define add, update, remove popup activation button behavior upon being clicked<br>
+             def show_add_popup(buttonAdd):<br>
+                 with popup_output:<br>
+                     popup_output.clear_output()<br>
+                     display(text_inputID, text_inputTYPE, text_inputBREED, text_inputCOLOR,<br>
+                             text_inputDOB, text_inputNAME, text_inputLocLat, text_inputLocLong,<br>
+                             submitNew_button)    <br>
+             <br>
+             def show_update_popup(buttonUpdate):<br>
+                 with popup_output:<br>
+                     popup_output.clear_output()<br>
+                     display(text_inputID_lookup, text_inputAgeUponOutcome, text_inputName, text_inputOutcomeType,<br>
+                             text_inputOutcomeSubtype, text_inputSexAtOutcome, text_inputLocLat, text_inputLocLong,<br>
+                             submitUpdate_button)   <br>
+             <br>
+             def show_remove_popup(buttonRemove):<br>
+                 with popup_output:<br>
+                     popup_output.clear_output()<br>
+                     display(text_inputID_lookup, <br>
+                             submitRemove_button)<br>
+             <br>
+             #link create, update and delete buttons to popup activation functions<br>
+             buttonAdd.on_click(show_add_popup)<br>
+             buttonUpdate.on_click(show_update_popup)<br>
+             buttonRemove.on_click(show_remove_popup)<br>
+             <br>
+             #link submission for new animal, updated animal, and animal to delete buttons to on click functions<br>
+             submitNew_button.on_click(on_submitNew_clicked)<br>
+             submitUpdated_button.on_click(on_submitUpdate_clicked)<br>
+             submitRemove_button.on_click(on_submitRemove_clicked)<br>
+             <br>
+                 <br>
+             #########################<br>
+             # Dashboard Layout / View<br>
+             #########################<br>
+             app = JupyterDash(__name__)<br>
+             <br>
+             #FIX ME Add in Grazioso Salvare’s logo<br>
+             image_filename = './assets/Grazioso Salvare Logo.png' # replace with your own image<br>
+             encoded_image = base64.b64encode(open(image_filename, 'rb').read())<br>
+             <br>
+             #FIX ME Place the HTML image tag in the line below into the app.layout code according to your design<br>
+             #FIX ME Also remember to include a unique identifier such as your name or date<br>
+             <br>
+             app.layout = html.Div([<br>
+             #    html.Div(id='hidden-div', style={'display':'none'}),<br>
+                 html.Center(html.B(html.H1('CS-340 Dashboard'))),<br>
+                 html.Hr(),<br>
+                 html.A( href="http://www.snhu.edu",<br>
+                         children=[ html.Img(src='data:image/png;base64,{}'.format(encoded_image.decode()),<br>
+                                             style={'height':'25%','width':'25%'}),]),<br>
+                 html.Img(src=app.get_asset_url('SRDogImage.jpg'), style={'height': '30%', 'width':'35%'}),<br>
+                 html.Div(<br>
+                     #FIXME Add in code for the interactive filtering options. For example, Radio buttons, drop down, checkboxes, etc.<br>
+                     dcc.Dropdown(['Water Rescue', 'Mountain or Wilderness Rescue', 'Disaster Rescue or Individual Tracking',<br>
+                                  'Reset Filter'], 'Reset Filter', id='filter-type'),<br>
+                     style={'width':'25%'},<br>
+             <br>
+                     ## UPDATED button integration into HTML style Div above datatable<br>
+                     buttonAdd,<br>
+                     buttonUpdate,<br>
+                     buttonRemove,<br>
+                     <br>
+                 ),<br>
+                 html.Hr(),<br>
+                 dash_table.DataTable(id='datatable-id',<br>
+                                      columns=[{"name": i, "id": i, "deletable": False, "selectable": True} for i in df.columns],<br>
+                                      data=df.to_dict('records'),<br>
+             #FIXME: Set up the features for your interactive data table to make it user-friendly for your client<br>
+             #If you completed the Module Six Assignment, you can copy in the code you created here <br>
+                                      sort_action = 'native',<br>
+                                      sort_mode = 'multi',<br>
+                                      page_size = 15,<br>
+                                      row_selectable="single",<br>
+                                     ),<br>
+                 html.Br(),<br>
+                 html.Hr(),<br>
+                 <br>
+             #This sets up the dashboard so that your chart and your geolocation chart are side-by-side<br>
+                 html.Div(className='row',<br>
+                      style={'display' : 'flex'},<br>
+                          children=[<br>
+                     html.Div(<br>
+                         id='graph-id',<br>
+                         className='col s12 m6',<br>
+             <br>
+                         ),<br>
+                     html.Div(<br>
+                         id='map-id',<br>
+                         className='col s12 m6',<br>
+                         )<br>
+                     ]),<br>
+                 html.Hr(),<br>
+                 <br>
+                 #Student and professor names right aligned at bottom of html page<br>
+                 html.Div([html.P('Christopher Anderson'), html.P('Prof. Kellogg')],<br>
+                           style={'text-align':'right'}<br>
+                          ),<br>
+                 html.Br(),<br>
+                 html.Br(),<br>
+             ])<br>
+             <br>
+             <br>
+             #############################################<br>
+             # Interaction Between Components / Controller<br>
+             #############################################<br>
+                 <br>
+             @app.callback(Output('datatable-id','data'),<br>
+                           [Input('filter-type', 'value')])<br>
+             def update_dashboard(filter_type):<br>
+             ## FIX ME Add code to filter interactive data table with MongoDB queries<br>
+                     #print('filter_type::', filter_type)<br>
+                     if filter_type == 'Water Rescue':<br>
+                         df = pd.DataFrame.from_records(db.read({'animal_type': 'Dog','breed' <br>
+                                                                 : {'$in' : [ 'Labrador Retriever Mix',<br>
+                                                                             'Chesapeake Bay Retriever',<br>
+                                                                             'Newfoundland']},<br>
+                                                                'sex_upon_outcome' : 'Intact Female',<br>
+                                                                "$and": [{'age_upon_outcome_in_weeks' : { '$gte' : 26}},<br>
+                                                                 {'age_upon_outcome_in_weeks' : { '$lte' : 156}}]<br>
+                                                                }))<br>
+                     elif filter_type == 'Mountain or Wilderness Rescue':<br>
+                         df = pd.DataFrame.from_records(db.read({'animal_type': 'Dog', 'breed' <br>
+                                                                 : {'$in' : [ 'German Shepherd', 'Alaskan Malamute',<br>
+                                                                              'Old English Sheepdog', 'Siberian Husky',<br>
+                                                                              'Rottweiler']},<br>
+                                                                'sex_upon_outcome' : 'Intact Male',<br>
+                                                                 "$and": [{'age_upon_outcome_in_weeks' : { '$gte' : 26}},<br>
+                                                                 {'age_upon_outcome_in_weeks' : { '$lte' : 156}}]<br>
+                                                                }))<br>
+                     elif filter_type == 'Disaster Rescue or Individual Tracking':<br>
+                         df = pd.DataFrame.from_records(db.read({'animal_type': 'Dog', 'breed' <br>
+                                                                 : {'$in' : ['Doberman Pinscher', 'German Shepherd',<br>
+                                                                             'Golden Retriever', 'Bloodhound',<br>
+                                                                             'Rottweiler']},<br>
+                                                                 'sex_upon_outcome' : 'Intact Male',<br>
+                                                                 "$and" : [{'age_upon_outcome_in_weeks' : { '$gte' : 20}},<br>
+                                                                 {'age_upon_outcome_in_weeks' : { '$lte' : 300}}]             <br>                                      
+                                                                }))<br>
+                     elif filter_type == 'Reset Filter':<br>
+                         df = pd.DataFrame.from_records(db.read({}))<br>
+                     <br>
+                     else:<br>
+                         raise Exception("Error: drop down menu fault.")<br>
+                     <br>
+                     df.drop(columns=['_id'],inplace=True)<br>
+                     data=df.to_dict('records')<br>
+                    <br>
+                     return data<br>
+             <br>
+             # Display the breeds of animal based on quantity represented in<br>
+             # the data table<br>
+             @app.callback(Output('graph-id', "children"),<br>
+                           [Input('datatable-id', "derived_virtual_data")])<br>
+             def update_graphs(viewData):<br>
+                 ###FIX ME ####<br>
+                 # add code for chart of your choice (e.g. pie chart) #<br>
+                 if viewData is None:<br>
+                     return<br>
+                 <br>
+                 dug = pd.DataFrame.from_dict(viewData)<br>
+             <br>
+                 return [<br>
+                     dcc.Graph(            <br>
+                         figure = px.pie(dug, names='breed', title='Preferred Animals')<br>
+                     )]<br>
+                 <br>
+             #This callback will highlight a cell on the data table when the user selects it<br>
+             @app.callback(Output('datatable-id', 'style_data_conditional'),<br>
+                           [Input('datatable-id', 'selected_columns')])<br>
+             def update_styles(selected_columns):<br>
+                 return [{<br>
+                     'if': { 'column_id': i },<br>
+                     'background_color': '#D2F3FF'<br>
+                 } for i in selected_columns]<br>
+             <br>
+             <br>
+             # This callback will update the geo-location chart for the selected data entry<br>
+             # derived_virtual_data will be the set of data available from the datatable in the form of <br>
+             # a dictionary.<br>
+             # derived_virtual_selected_rows will be the selected row(s) in the table in the form of<br>
+             # a list. For this application, we are only permitting single row selection so there is only<br>
+             # one value in the list.<br>
+             # The iloc method allows for a row, column notation to pull data from the datatable<br>
+             @app.callback(Output('map-id', "children"),<br>
+                           [Input('datatable-id', "derived_virtual_data"),<br>
+                           Input('datatable-id', "derived_virtual_selected_rows")])<br>
+             def update_map(viewData, index):  <br>
+                 if viewData is None:<br>
+                     return<br>
+                 elif index is None:<br>
+                     return<br>
+                 <br>
+                 dff = pd.DataFrame.from_dict(viewData)<br>
+                 # Because we only allow single row selection, the list can be converted to a row index here<br>
+                 if index is None:<br>
+                     row = 0<br>
+                 else: <br>
+                     row = index[0]<br>
+                     <br>
+                 # Austin TX is at [30.75,-97.48]<br>
+                 return [<br>
+                     dl.Map(style={'width': '1000px', 'height': '500px'}, center=[30.75,-97.48], zoom=10, children=[<br>
+                         dl.TileLayer(id="base-layer-id"),<br>
+                         # Marker with tool tip and popup<br>
+                         # Column 13 and 14 define the grid-coordinates for the map<br>
+                         # Column 4 defines the breed for the animal<br>
+                         # Column 9 defines the name of the animal<br>
+                         dl.Marker(position=[dff.iloc[row,13],dff.iloc[row,14]], children=[<br>
+                             dl.Tooltip(dff.iloc[row,4]),<br>
+                             dl.Popup([<br>
+                                 html.H1("Animal Name"),<br>
+                                 html.P(dff.iloc[row,9])<br>
+                             ])<br>
+                         ])])]<br>
+             <br><br><br>          
+             app.run_server(debug=True)<br>
 
 
           </p>      
