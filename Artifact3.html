@@ -155,12 +155,12 @@
          #########################<br>
          app = JupyterDash(__name__)<br>
          <br>
-         #FIX ME Add in Grazioso Salvare’s logo<br>
+         #!! Add in Grazioso Salvare’s logo<br>
          image_filename = './assets/Grazioso Salvare Logo.png' # replace with your own image<br>
          encoded_image = base64.b64encode(open(image_filename, 'rb').read())<br>
          <br>
-         #FIX ME Place the HTML image tag in the line below into the app.layout code according to your design<br>
-         #FIX ME Also remember to include a unique identifier such as your name or date<br>
+         #!! Place the HTML image tag in the line below into the app.layout code according to your design<br>
+         #!! Also remember to include a unique identifier such as your name or date<br>
          <br>
          app.layout = html.Div([<br>
          #    html.Div(id='hidden-div', style={'display':'none'}),<br>
@@ -181,7 +181,7 @@
              dash_table.DataTable(id='datatable-id',<br>
                                   columns=[{"name": i, "id": i, "deletable": False, "selectable": True} for i in df.columns],<br>
                                   data=df.to_dict('records'),<br>
-         #FIXME: Set up the features for your interactive data table to make it user-friendly for your client<br>
+         #!!: Set up the features for your interactive data table to make it user-friendly for your client<br>
          #If you completed the Module Six Assignment, you can copy in the code you created here <br>
                                   sort_action = 'native',<br>
                                   sort_mode = 'multi',<br>
@@ -223,7 +223,7 @@
          @app.callback(Output('datatable-id','data'),<br>
                        [Input('filter-type', 'value')])<br>
          def update_dashboard(filter_type):<br>
-         ## FIX ME Add code to filter interactive data table with MongoDB queries<br>
+         ## !! Add code to filter interactive data table with MongoDB queries<br>
                  #print('filter_type::', filter_type)<br>
                  if filter_type == 'Water Rescue':<br>
                      df = pd.DataFrame.from_records(db.read({'animal_type': 'Dog','breed' <br>
@@ -268,7 +268,7 @@
          @app.callback(Output('graph-id', "children"),<br>
                        [Input('datatable-id', "derived_virtual_data")])<br>
          def update_graphs(viewData):<br>
-             ###FIX ME ####<br>
+             ###!! ####<br>
              # add code for chart of your choice (e.g. pie chart) #<br>
              if viewData is None:<br>
                  return<br>
@@ -580,12 +580,12 @@
              #########################<br>
              app = JupyterDash(__name__)<br>
              <br>
-             #FIX ME Add in Grazioso Salvare’s logo<br>
+             #!! Add in Grazioso Salvare’s logo<br>
              image_filename = './assets/Grazioso Salvare Logo.png' # replace with your own image<br>
              encoded_image = base64.b64encode(open(image_filename, 'rb').read())<br>
              <br>
-             #FIX ME Place the HTML image tag in the line below into the app.layout code according to your design<br>
-             #FIX ME Also remember to include a unique identifier such as your name or date<br>
+             #!! Place the HTML image tag in the line below into the app.layout code according to your design<br>
+             #!! Also remember to include a unique identifier such as your name or date<br>
              <br>
              app.layout = html.Div([<br>
              #    html.Div(id='hidden-div', style={'display':'none'}),<br>
@@ -611,7 +611,7 @@
                  dash_table.DataTable(id='datatable-id',<br>
                                       columns=[{"name": i, "id": i, "deletable": False, "selectable": True} for i in df.columns],<br>
                                       data=df.to_dict('records'),<br>
-             #FIXME: Set up the features for your interactive data table to make it user-friendly for your client<br>
+             #!!: Set up the features for your interactive data table to make it user-friendly for your client<br>
              #If you completed the Module Six Assignment, you can copy in the code you created here <br>
                                       sort_action = 'native',<br>
                                       sort_mode = 'multi',<br>
@@ -653,7 +653,7 @@
              @app.callback(Output('datatable-id','data'),<br>
                            [Input('filter-type', 'value')])<br>
              def update_dashboard(filter_type):<br>
-             ## FIX ME Add code to filter interactive data table with MongoDB queries<br>
+             ## !! Add code to filter interactive data table with MongoDB queries<br>
                      #print('filter_type::', filter_type)<br>
                      if filter_type == 'Water Rescue':<br>
                          df = pd.DataFrame.from_records(db.read({'animal_type': 'Dog','breed' <br>
@@ -698,7 +698,7 @@
              @app.callback(Output('graph-id', "children"),<br>
                            [Input('datatable-id', "derived_virtual_data")])<br>
              def update_graphs(viewData):<br>
-                 ###FIX ME ####<br>
+                 ###!! ####<br>
                  # add code for chart of your choice (e.g. pie chart) #<br>
                  if viewData is None:<br>
                      return<br>
