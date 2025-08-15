@@ -124,15 +124,442 @@
     <div>&ensp;</div>
     <div>
       <p><H3><br><br>Original code<br><br></H3>
-      
+
+        //Inline function named filePathFunction returning string, noted as inline<br>
+        inline string filePathFunction() {<br>
+            //Define string named filePath<br>
+            char  userFilePath[256];<br>
+            //Output prompt for user to enter file name. Set input to filePath<br>
+            cout << "Enter file name- \n(include file extension)" << endl;;<br>
+            cin.getline(userFilePath, 256);<br>
+            <br>
+            //Set filePath to "./" and filePath's current state<br>
+            string filePath;<br>
+            filePath.append('.' + '/' + userFilePath);<br>
+            return filePath;<br>
+        }<br>
+        <br>
+        //Inline function named loadCourseInfoBST of void return with BinarySearchTree reference named courseBST and string named dataFilePath<br>
+        inline void loadCourseInfoBST(BinarySearchTree &courseBST, string dataFilePath) {<br>
+            //Define ifstream handle named dataInHandle, string named lineStr and size_t named prerequisiteAdditionalFound<br>
+            ifstream dataInHandle;<br>
+            string lineStr;<br>
+            size_t prerequisiteAdditionalFound;<br>
+            <br>
+            //Check section of code for errors<br>
+            try {<br>
+                <br>
+                //open dataFilePath's file and bind to dataInHandle, copy first line of dataFilePath's file to lineStr<br>
+                dataInHandle.open(dataFilePath);<br>
+                getline(dataInHandle, lineStr);<br>
+                <br>
+                //While dataInHandle is not returning end of file flag<br>
+                while (!dataInHandle.eof()) {<br>
+                    <br>
+                    //Define Course named newCourse, copy next line of file through dataInHandle to lineStr<br>
+                    Course * newCourse = new Course;<br>
+                    getline(dataInHandle, lineStr);<br>
+                    <br>
+                    //Initialize integer named positionSplit1 to index of first "," and positionSplit2 to index of second ","<br>
+                    int positionSplit1 = lineStr.find(",");<br>
+                    int positionSplit2 = lineStr.find(",", positionSplit1 + 1);<br>
+                    <br>
+                    //Set newCourse's courseNumber member to string before first comma and newCourse's name to string between first and second commas<br>
+                    newCourse->courseNumber = lineStr.substr(0, positionSplit1);<br>
+                    newCourse->name = lineStr.substr(positionSplit1 + 1, positionSplit2-1);<br>
+                    <br>
+                    //Set positionSplit1 to occurence of next comma and prerequisiteAdditionalFound to value returned by lineStr seeking another occurence of ","<br>
+                    positionSplit1 = lineStr.find(",", positionSplit2 + 1);<br>
+                    prerequisiteAdditionalFound = lineStr.find(",", positionSplit1 + 1);<br>
+                    <br>
+                    //If prerequisiteAdditionalFound is npos<br>
+                    if (prerequisiteAdditionalFound == string::npos)<br>
+                    {<br>
+                        //Set newCourse's prerequisiteListRoot's prerequisiteNumber to lineStr's positionSplit1 to end of string<br>
+                        delete newCourse->prerequisiteListRoot;<br>
+                        newCourse->prerequisiteListRoot->prerequisiteNumber = lineStr.substr(positionSplit1 + 1);<br>
+                    }<br>
+                    else {<br>
+                    <br>
+                        //Set positionSplit2 to index of next occurence of comma and set newCourse's prerequisiteListRoot's prerequisiteNumber to lineStr<br>
+                        //between positionSplit1 and positionSplit2<br>
+                        positionSplit2 = lineStr.find(",", positionSplit1 + 1);<br>
+                        delete newCourse->prerequisiteListRoot;<br>
+                        newCourse->prerequisiteListRoot->prerequisiteNumber = lineStr.substr(positionSplit1 + 1, positionSplit2 - 1);<br>
+                        <br>
+                        //Set prerequisiteAdditionalFound to return of lineStr seeking next comma<br>
+                        prerequisiteAdditionalFound = lineStr.find(",", positionSplit2 + 1);<br>
+                        <br>
+                        //While prerequisiteAdditionalFound is not npos<br>
+                        while (prerequisiteAdditionalFound != string::npos) {<br>
+                        <br>
+                            //Initialize prerequisiteListNode pointer named nextPrerequisite to null<br>
+                            prerequisiteListNode* nextPrerequisite = nullptr;<br>
+                            <br>
+                            //Set positionSplit1 to lineStr seeking index of next comma<br>
+                            positionSplit1 = lineStr.find(",", positionSplit2 + 1);<br>
+                            <br>
+                            //Set prerequisiteAdditionalFound to value returned by lineStr seeking next comma<br>
+                            prerequisiteAdditionalFound = lineStr.find(",", positionSplit1 + 1);<br>
+                            <br>
+                            //If prerequisiteAdditionalFound is npos<br>
+                            if (prerequisiteAdditionalFound == string::npos)<br>
+                                <br>
+                                //Set nextPrerequisite's prerequisiteNumber to lineStr from last comma to end of string<br>
+                                nextPrerequisite->prerequisiteNumber = lineStr.substr(positionSplit1 + 1);<br>
+                            else {<br>
+                            <br>
+                                //Set positionSplit2 to index of next comma in lineStr<br>
+                                positionSplit2 = lineStr.find(",", positionSplit1 + 1);<br>
+                                //Set nextPrerequisite's prerequisiteNumber to lineStr between positionSplit1 and positionSplit2<br>
+                                nextPrerequisite->prerequisiteNumber = lineStr.substr(positionSplit1 + 1, positionSplit2 - 1);<br>
+                            }<br>
+                            <br>
+                            //Set nextPrerequisite's next pointer to newCourse's prerequisiteListRoot's next pointer<br>
+                            nextPrerequisite->next = newCourse->prerequisiteListRoot->next;<br>
+                            //Set newCourse's prerequisiteListRoot's next pointer to nextPrerequisite<br>
+                            newCourse->prerequisiteListRoot->next = nextPrerequisite;<br>
+                        }<br>
+                    }<br>
+                    <br>
+                    //Call courseBST's Insert function with newCourse as parameter<br>
+                    courseBST.Insert(*newCourse);<br>
+                }<br>
+                <br>
+                //close dataInHandle bound to dataFilePath's file<br>
+                dataInHandle.close();<br>
+            }<br>
+            //Should any errors be reported by previous code<br>
+            catch (exception& e)<br>
+            {<br>
+                //Output error code<br>
+                cout << "\n\nError code- " << e.what() << endl;<br>
+            }<br>
+        }<br>
+        <br>
+        //Inline function named printObjectBST of void return with string named courseNumberKey and BinarySearchTree named bst<br>
+        inline void printObjectBST(string courseNumberKey, BinarySearchTree bst) {<br>
+            //Initialize Course named aCourse to return of bst's Search function with courseNumberKey as parameter<br>
+            Course aCourse = bst.Search(courseNumberKey);<br>
+            <br>
+            //If aCourse's courseNumber is equivalent to courseNumberKey<br>
+            if (aCourse.courseNumber == courseNumberKey) {<br>
+                <br>
+                //Output aCourse's courseNumber ", " aCourse's name ", "<br>
+                cout << aCourse.courseNumber << ", " << aCourse.name << ", ";<br>
+                <br>
+                //Call printCoursePrerequisiteList with aCourse as parameter<br>
+                printCoursePrerequisiteList(aCourse);<br>
+            }<br>
+            else {<br>
+                <br>
+                //Output error statement<br>
+                cout << "\n\nError- course returned by binary search tree does not match course number searched." << endl;<br>
+            }<br>
+        }<br>
+        <br>
+        //Inline function named menuFunction returning bool with BinarySearchTree reference named courseBST as parameter<br>
+        inline bool menuFunction(BinarySearchTree &courseBST) {<br>
+            //Define short integer named userIn, strings named courseNumberInput and filePath<br>
+            string courseNumberInput, filePath;<br>
+            short userIn;<br>
+            <br>
+            //Output Menu options and prmpt user for input<br>
+            cout << "Menu-\n1.Load Data Structure:\n2.Print Course List:\n3.Print Course:\n4.Exit" << endl;<br>
+            cin >> userIn;<br>
+            <br>
+            //Initiate switch controlled by userIn<br>
+            switch (userIn) {<br>
+            <br>
+                //When userIn is 1<br>
+                case 1:<br>
+                    //Set filePath to name of file in executable's current directory and call loadCourseInfoBST with courseBST and filePath<br>
+                    filePath = filePathFunction();<br>
+                    loadCourseInfoBST(courseBST, filePath);<br>
+                    break;<br>
+                <br>
+                //When userIn is 2<br>
+                case 2:<br>
+                    //call data structure instance's print all function<br>
+                    courseBST.printAllCourseBST();<br>
+                    break;<br>
+                <br>
+                //When userIn is 3<br>
+                case 3:<br>
+                    //Prompt user for course number to search for<br>
+                    cout << "Enter course number: ";<br>
+                    cin >> courseNumberInput;<br>
+                    <br>
+                    //call print object with data structure instance and courseNumberInput<br>
+                    printObjectBST(courseNumberInput, courseBST);<br>
+                    break;<br>
+                <br>
+                //When userIn is 4<br>
+                case 4:<br>
+                    // return true, that will set exitCondition to true ending the program<br>
+                    return true;<br>
+                    break;<br>
+                <br>
+                //When userIn is not a defined integer<br>
+                default:<br>
+                    //Output Error statement<br>
+                    cout << "Invalid input- " << endl << userIn << endl;<br>
+                    break;<br>
+            <br>
+            }<br>
+            <br>
+            //return false, signifying that user does not want to exit<br>
+            return false;<br>
+        }<br>
+        
         
     </p></div>
+
+       
     <div>&emsp;&emsp;&emsp;&emsp; &emsp;&emsp;&emsp;&emsp; &emsp;&emsp;</div>
     <div>
          <p><H3><br><br>Updated code<br><br></H3>
-          
 
-           
+              //Inline function named filePathFunction returning string, noted as inline<br>
+              inline string filePathFunction() {<br>
+                  //Define string named filePath<br>
+                  char  userFilePath[256];<br>
+                  //Output prompt for user to enter file name. Set input to filePath<br>
+                  cout << "Enter file name- \n(include file extension)" << endl;;<br>
+                  cin.getline(userFilePath, 256);<br>
+                  <br>
+                  //Set filePath to "./" and filePath's current state<br>
+                  string filePath;<br>
+                  filePath.append('.' + '/' + userFilePath);<br>
+                  return filePath;<br>
+              }<br>
+              <br>
+              //Inline function named loadCourseInfoBST of void return with BinarySearchTree reference named courseBST and string named dataFilePath<br>
+              inline void loadCourseInfoBST(BinarySearchTree &courseBST, string dataFilePath) {<br>
+                  //Define ifstream handle named dataInHandle, string named lineStr and size_t named prerequisiteAdditionalFound<br>
+                  ifstream dataInHandle;<br>
+                  string lineStr;<br>
+                  size_t prerequisiteAdditionalFound;<br>
+                  <br>
+                  //Check section of code for errors<br>
+                  try {<br>
+                      <br>
+                      //open dataFilePath's file and bind to dataInHandle, copy first line of dataFilePath's file to lineStr<br>
+                      dataInHandle.open(dataFilePath);<br>
+                      getline(dataInHandle, lineStr);<br>
+                      <br>
+                      //While dataInHandle is not returning end of file flag<br>
+                      while (!dataInHandle.eof()) {<br>
+                          <br>
+                          //Define Course named newCourse, copy next line of file through dataInHandle to lineStr<br>
+                          Course * newCourse = new Course;<br>
+                          getline(dataInHandle, lineStr);<br>
+                          <br>
+                          //Initialize integer named positionSplit1 to index of first "," and positionSplit2 to index of second ","<br>
+                          int positionSplit1 = lineStr.find(",");<br>
+                          int positionSplit2 = lineStr.find(",", positionSplit1 + 1);<br>
+                          <br>
+                          //Set newCourse's courseNumber member to string before first comma and newCourse's name to string between first and second commas<br>
+                          newCourse->courseNumber = lineStr.substr(0, positionSplit1);<br>
+                          newCourse->name = lineStr.substr(positionSplit1 + 1, positionSplit2-1);<br>
+                          <br>
+                          //Set positionSplit1 to occurence of next comma and prerequisiteAdditionalFound to value returned by lineStr seeking another occurence of ","<br>
+                          positionSplit1 = lineStr.find(",", positionSplit2 + 1);<br>
+                          prerequisiteAdditionalFound = lineStr.find(",", positionSplit1 + 1);<br>
+                          <br>
+                          //If prerequisiteAdditionalFound is npos<br>
+                          if (prerequisiteAdditionalFound == string::npos)<br>
+                          {<br>
+                              //Set newCourse's prerequisiteListRoot's prerequisiteNumber to lineStr's positionSplit1 to end of string<br>
+                              delete newCourse->prerequisiteListRoot;<br>
+                              newCourse->prerequisiteListRoot->prerequisiteNumber = lineStr.substr(positionSplit1 + 1);<br>
+                          }<br>
+                          else {<br>
+                          <br>
+                              //Set positionSplit2 to index of next occurence of comma and set newCourse's prerequisiteListRoot's prerequisiteNumber to lineStr<br>
+                              //between positionSplit1 and positionSplit2<br>
+                              positionSplit2 = lineStr.find(",", positionSplit1 + 1);<br>
+                              delete newCourse->prerequisiteListRoot;<br>
+                              newCourse->prerequisiteListRoot->prerequisiteNumber = lineStr.substr(positionSplit1 + 1, positionSplit2 - 1);<br>
+                              <br>
+                              //Set prerequisiteAdditionalFound to return of lineStr seeking next comma<br>
+                              prerequisiteAdditionalFound = lineStr.find(",", positionSplit2 + 1);<br>
+                              <br>
+                              //While prerequisiteAdditionalFound is not npos<br>
+                              while (prerequisiteAdditionalFound != string::npos) {<br>
+                              <br>
+                                  //Initialize prerequisiteListNode pointer named nextPrerequisite to null<br>
+                                  prerequisiteListNode* nextPrerequisite = nullptr;<br>
+                                  <br>
+                                  //Set positionSplit1 to lineStr seeking index of next comma<br>
+                                  positionSplit1 = lineStr.find(",", positionSplit2 + 1);<br>
+                                  <br>
+                                  //Set prerequisiteAdditionalFound to value returned by lineStr seeking next comma<br>
+                                  prerequisiteAdditionalFound = lineStr.find(",", positionSplit1 + 1);<br>
+                                  <br>
+                                  //If prerequisiteAdditionalFound is npos<br>
+                                  if (prerequisiteAdditionalFound == string::npos)<br>
+                                      <br>
+                                      //Set nextPrerequisite's prerequisiteNumber to lineStr from last comma to end of string<br>
+                                      nextPrerequisite->prerequisiteNumber = lineStr.substr(positionSplit1 + 1);<br>
+                                  else {<br>
+                                  <br>
+                                      //Set positionSplit2 to index of next comma in lineStr<br>
+                                      positionSplit2 = lineStr.find(",", positionSplit1 + 1);<br>
+                                      //Set nextPrerequisite's prerequisiteNumber to lineStr between positionSplit1 and positionSplit2<br>
+                                      nextPrerequisite->prerequisiteNumber = lineStr.substr(positionSplit1 + 1, positionSplit2 - 1);<br>
+                                  }<br>
+                                  <br>
+                                  //Set nextPrerequisite's next pointer to newCourse's prerequisiteListRoot's next pointer<br>
+                                  nextPrerequisite->next = newCourse->prerequisiteListRoot->next;<br>
+                                  //Set newCourse's prerequisiteListRoot's next pointer to nextPrerequisite<br>
+                                  newCourse->prerequisiteListRoot->next = nextPrerequisite;<br>
+                              }<br>
+                          }<br>
+                          <br>
+                          //Call courseBST's Insert function with newCourse as parameter<br>
+                          courseBST.Insert(*newCourse);<br>
+                      }<br>
+                      <br>
+                      //close dataInHandle bound to dataFilePath's file<br>
+                      dataInHandle.close();<br>
+                  }<br>
+                  //Should any errors be reported by previous code<br>
+                  catch (exception& e)<br>
+                  {<br>
+                      //Output error code<br>
+                      cout << "\n\nError code- " << e.what() << endl;<br>
+                  }<br>
+              }<br>
+              <br>
+              //Inline function named printObjectBST of void return with string named courseNumberKey and BinarySearchTree named bst<br>
+              inline void printObjectBST(string courseNumberKey, BinarySearchTree bst) {<br>
+                  //Initialize Course named aCourse to return of bst's Search function with courseNumberKey as parameter<br>
+                  Course aCourse = bst.Search(courseNumberKey);<br>
+                  <br>
+                  //If aCourse's courseNumber is equivalent to courseNumberKey<br>
+                  if (aCourse.courseNumber == courseNumberKey) {<br>
+                      <br>
+                      //Output aCourse's courseNumber ", " aCourse's name ", "<br>
+                      cout << aCourse.courseNumber << ", " << aCourse.name << ", ";<br>
+                      <br>
+                      //Call printCoursePrerequisiteList with aCourse as parameter<br>
+                      printCoursePrerequisiteList(aCourse);<br>
+                  }<br>
+                  else {<br>
+                      <br>
+                      //Output error statement<br>
+                      cout << "\n\nError- course returned by binary search tree does not match course number searched." << endl;<br>
+                  }<br>
+              }<br>
+              <br>
+              //Inline function named menuFunction returning bool with BinarySearchTree reference named courseBST as parameter<br>
+              inline bool menuFunction(BinarySearchTree &courseBST) {<br>
+              //Define short integer named userIn, strings named courseNumberInput and filePath<br>
+              string courseNumberInput, filePath;<br>
+              short userIn;<br>
+              <br>
+              char inputBuffer;<br>
+              int i = 0;<br>
+              <br>
+              //Output Menu options and prmpt user for input<br>
+              cout << "Menu-\n1.Load Data Structure:\n2.Print Course List:\n3.Print Course:\n4.Exit" << endl;<br>
+              <br>
+              //UPDATE BLOCK 7-26-2025<br>
+              // <br>
+              //get keyboard input and store to inputBuffer<br>
+              inputBuffer = _getch();<br>
+              <br>
+              // while the user has not entered an integer char 0-9, acquire user input<br>
+              while (inputBuffer < '0' || inputBuffer > '9') {    <br>
+                  <br>
+                  //get keyboard input and store to inputBuffer<br>
+                  inputBuffer = _getch();<br>
+              <br>
+              }<br>
+              <br>
+              // oce the user has entered an integer char , 0-9, display the char in the console<br>
+              cout.put(inputBuffer);<br>
+              <br>
+              //if the user has input an integer char, 1-3, assign this integer to the userIn variable<br>
+              if (inputBuffer > '0' && inputBuffer < '4') {<br>
+                  userIn = inputBuffer - '0';<br>
+              }<br>
+              else {                              // otherwise assign the userIn variable the inconsequential integer 5<br>
+                  userIn = 5;<br>
+              }<br>
+              <br>
+              //END UPDATED BLOCK 7-26-2025<br>
+              <br>
+              //Initiate switch controlled by userIn<br>
+              switch (userIn) {<br>
+              <br>
+                  //When userIn is 1<br>
+                  case 1:<br>
+                      //Set filePath to name of file in executable's current directory and call loadCourseInfoBST with courseBST and filePath<br>
+                      filePath = filePathFunction();<br>
+                      loadCourseInfoBST(courseBST, filePath);<br>
+                      break;<br>
+                  <br>
+                  //When userIn is 2<br>
+                  case 2:<br>
+                      //call data structure instance's print all function<br>
+                      courseBST.printAllCourseBST();<br>
+                      break;<br>
+                  <br>
+                  //When userIn is 3<br>
+                  case 3:<br>
+                      //Prompt user for course number to search for<br>
+                      cout << "Enter course number: ";<br>
+                      <br>
+                      //UPDATE 7-26-2025<br>
+                      //<br>
+                      i = 0;<br>
+                      while (i < courseNumberInput.max_size() && i > -1) {          //while input counter named i is less than the maximum allowed string length<br>
+                                                                                    // and the counter i is greater than -1<br>
+                          inputBuffer = _getch();                           //assign a single char of keyboard input to inputBuffer<br>
+                          <br>
+                          if ( inputBuffer > ' ' && inputBuffer < '~') {    //if input is a standard symbol, alphabetic, or numeric add to the string<br>
+                              cout.put(inputBuffer);                      //display keyboard input to console<br>
+                              courseNumberInput[i] = inputBuffer;         //concatenate inputBuffer's char to the i-th index of the string named courseNumberInput<br>
+                              i++;<br>
+                              cout.put(inputBuffer);<br>
+                          }<br>
+                          <br>
+                          else if (inputBuffer == 8) {                    //if the input is a backspace then decrement to the previous string index,<br>
+                              i--;                                        // nullify the char assigned to this index.<br>
+                              courseNumberInput[i] = '\0';<br>
+                              cout.put('\b');<br>
+                          }<br>
+                         <br>
+                          else if (inputBuffer == '\n') {                   //if the input is a carriage return(Enter key) then exit the while loop<br>
+                              i = -1;<br>
+                          }<br>
+                         <br>
+                      }<br>
+                      <br>
+                      //UPDATE END<br>
+                      <br>
+                      //call print object with data structure instance and courseNumberInput<br>
+                      printObjectBST(courseNumberInput, courseBST);<br>
+                      break;<br>
+                  <br>
+                  //When userIn is 4<br>
+                  case 4:<br>
+                      // return true, that will set exitCondition to true ending the program<br>
+                      return true;<br>
+                      break;<br>
+                  <br>
+                  //When userIn is not a defined integer<br>
+                  default:<br>
+                      //Output Error statement<br>
+                      cout << "Invalid input- " << endl << userIn << endl;<br>
+              <br>
+              }<br>
+              <br>
+              //return false, signifying that user does not want to exit<br>
+              return false;<br>
+          }<br>
           </p>      
     </div>                   
     </div>
